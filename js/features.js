@@ -471,6 +471,101 @@ function showFeatureDetails(featureTitle) {
                 </div>
             `;
     }
+    // Add this function to handle ticket booking
+function showTicketingOptions(routeId, from, to, departureTime) {
+    const modalContent = getElement('#modal-content-container');
+    if (!modalContent) return;
+    
+    const ticketId = generateTicketId();
+    const ticketPrice = Math.floor(Math.random() * 30) + 20; // Random price between 20 and 50
+    
+    modalContent.innerHTML = `
+        <h2>Book Your Ticket</h2>
+        <div style="margin: 20px 0;">
+            <div style="background: #f5f5f5; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
+                <p><strong>Route:</strong> ${routeId}</p>
+                <p><strong>From:</strong> ${from}</p>
+                <p><strong>To:</strong> ${to}</p>
+                <p><strong>Departure:</strong> ${departureTime}</p>
+                <p><strong>Ticket ID:</strong> ${ticketId}</p>
+                <p><strong>Price:</strong> ₹${ticketPrice.toFixed(2)}</p>
+            </div>
+            
+            <h3>Select Payment Method</h3>
+            <div style="display: flex; flex-wrap: wrap; gap: 10px; margin: 15px 0;">
+                <label style="flex: 1; min-width: 120px; padding: 10px; border: 1px solid #ddd; border-radius: 5px; cursor: pointer;">
+                    <input type="radio" name="payment" value="upi" checked>
+                    <span style="margin-left: 5px;">UPI</span>
+                </label>
+                <label style="flex: 1; min-width: 120px; padding: 10px; border: 1px solid #ddd; border-radius: 5px; cursor: pointer;">
+                    <input type="radio" name="payment" value="card">
+                    <span style="margin-left: 5px;">Credit/Debit Card</span>
+                </label>
+                <label style="flex: 1; min-width: 120px; padding: 10px; border: 1px solid #ddd; border-radius: 5px; cursor: pointer;">
+                    <input type="radio" name="payment" value="wallet">
+                    <span style="margin-left: 5px;">Digital Wallet</span>
+                </label>
+            </div>
+            
+            <div class="qr-scanner">
+                <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${ticketId}" alt="QR Code">
+                <p style="margin-top: 10px;">Scan this QR code to pay</p>
+            </div>
+        </div>
+        <button class="submit-rating" onclick="processPayment('${ticketId}', '${routeId}', '${from}', '${to}', '${departureTime}', ${ticketPrice})">Complete Payment</button>
+    `;
+    
+    // Show modal
+    const modal = getElement('#feature-modal');
+    if (modal) {
+        modal.style.display = 'block';
+    }
+}
+
+// Helper function to generate ticket ID
+function generateTicketId() {
+    return 'TKT-' + Math.random().toString(36).substr(2, 8).toUpperCase();
+}
+
+// Function to process payment
+function processPayment(ticketId, routeId, from, to, departureTime, price) {
+    const modalContent = getElement('#modal-content-container');
+    if (!modalContent) return;
+    
+    // Show loading state
+    modalContent.innerHTML = `
+        <div style="text-align: center; padding: 20px;">
+            <i class="fas fa-spinner fa-spin" style="font-size: 48px; color: #4a6cf7; margin-bottom: 20px;"></i>
+            <h2>Processing Payment</h2>
+            <p>Please wait while we process your payment...</p>
+        </div>
+    `;
+    
+    // Simulate payment processing
+    setTimeout(() => {
+        modalContent.innerHTML = `
+            <div style="text-align: center; padding: 20px;">
+                <i class="fas fa-check-circle" style="font-size: 48px; color: #4a6cf7; margin-bottom: 20px;"></i>
+                <h2>Payment Successful!</h2>
+                <p>Your ticket has been booked successfully.</p>
+                <div style="margin: 20px 0; background: #f5f5f5; padding: 15px; border-radius: 5px; text-align: left;">
+                    <p><strong>Ticket ID:</strong> ${ticketId}</p>
+                    <p><strong>Route:</strong> ${routeId}</p>
+                    <p><strong>From:</strong> ${from}</p>
+                    <p><strong>To:</strong> ${to}</p>
+                    <p><strong>Departure:</strong> ${departureTime}</p>
+                    <p><strong>Amount Paid:</strong> ₹${price.toFixed(2)}</p>
+                </div>
+                <p>A copy of your ticket has been sent to your email and mobile number.</p>
+                <div class="qr-scanner">
+                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${ticketId}" alt="QR Code">
+                    <p style="margin-top: 10px;">Show this QR code to the conductor when boarding</p>
+                </div>
+                <button onclick="closeModal()" class="submit-rating" style="margin-top: 20px;">Close</button>
+            </div>
+        `;
+    }, 2000);
+}
     
     // Show modal
     const modal = getElement('#feature-modal');

@@ -705,88 +705,68 @@ function closeModal() {
 
 
 // Function to show a demo route for the journey planner
+// ... existing code ...
 function showDemoRoute() {
-    const fromSelect = document.getElementById('demo-from');
-    const toSelect = document.getElementById('demo-to');
-    
-    if (!fromSelect || !toSelect) return;
-    
-    const from = fromSelect.value;
-    const to = toSelect.value;
+    const from = document.getElementById('demo-from').value;
+    const to = document.getElementById('demo-to').value;
     
     if (!from || !to) {
         alert('Please select both starting point and destination');
         return;
     }
     
-    if (from === to) {
-        alert('Starting point and destination cannot be the same');
-        return;
-    }
-    
-    // Find the journey planner demo container
     const demoContainer = document.querySelector('.journey-planner-demo');
     if (!demoContainer) return;
     
-    // Show loading indicator
-    demoContainer.innerHTML += `
-        <div class="demo-loading">
-            <i class="fas fa-spinner fa-spin"></i> Planning your journey...
-        </div>
-    `;
+    // Show loading state
+    demoContainer.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> Finding best routes...</div>';
     
-    // Simulate loading delay
+    // Simulate API call delay
     setTimeout(() => {
-        // Generate a random route
-        const routeId = 'KMT-' + Math.floor(Math.random() * 10 + 1).toString().padStart(2, '0');
-        const departureTime = '08:' + Math.floor(Math.random() * 60).toString().padStart(2, '0');
-        const duration = Math.floor(Math.random() * 30 + 15) + ' min';
-        const stops = Math.floor(Math.random() * 5 + 2);
-        const fare = '₹' + Math.floor(Math.random() * 30 + 20);
+        const departureTime = '09:00';
+        const duration = '45';
+        const stops = Math.floor(Math.random() * 5) + 2;
+        const fare = '₹' + (Math.floor(Math.random() * 30) + 20);
+        const routeId = 'KMT-' + Math.floor(Math.random() * 100);
         
-        // Remove loading indicator
-        const loadingIndicator = document.querySelector('.demo-loading');
-        if (loadingIndicator) {
-            loadingIndicator.remove();
-        }
-        
-        // Show route details
-        demoContainer.innerHTML += `
-            <div class="demo-route-result">
-                <h4>Recommended Route</h4>
+        demoContainer.innerHTML = `
+            <div class="route-results">
                 <div class="route-card">
                     <div class="route-header">
-                        <span class="route-id">${routeId}</span>
-                        <span class="status-badge on-time">On Time</span>
+                        <h3>Route ${routeId}</h3>
+                        <span class="route-status">On Time</span>
                     </div>
                     <div class="route-body">
-                        <div class="route-stations">
-                            <div class="station-from">
-                                <i class="fas fa-map-marker-alt"></i>
-                                <div>
-                                    <span class="time">${departureTime}</span>
-                                    <span class="name">${from}</span>
-                                </div>
-                            </div>
-                            <div class="route-line">
-                                <span class="stops">${stops} stops</span>
-                            </div>
-                            <div class="station-to">
-                                <i class="fas fa-map-marker"></i>
-                                <div>
-                                    <span class="time">${calculateArrivalTime(departureTime, duration)}</span>
-                                    <span class="name">${to}</span>
-                                </div>
-                            </div>
-                        </div>
                         <div class="route-info">
-                            <span><i class="fas fa-clock"></i> ${duration}</span>
-                            <span><i class="fas fa-ticket-alt"></i> ${fare}</span>
+                            <div class="route-stations">
+                                <div class="station-from">
+                                    <i class="fas fa-map-marker-alt"></i>
+                                    <div class="station-details">
+                                        <span class="time">${departureTime}</span>
+                                        <span class="name">${from}</span>
+                                    </div>
+                                </div>
+                                <div class="route-line">
+                                    <span class="stops">${stops} stops</span>
+                                </div>
+                                <div class="station-to">
+                                    <i class="fas fa-map-marker"></i>
+                                    <div class="station-details">
+                                        <span class="time">${calculateArrivalTime(departureTime, duration)}</span>
+                                        <span class="name">${to}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="journey-details">
+                                <span><i class="fas fa-clock"></i> ${duration} mins</span>
+                                <span><i class="fas fa-bus"></i> Direct</span>
+                                <span><i class="fas fa-ticket-alt"></i> ${fare}</span>
+                            </div>
                         </div>
                     </div>
                     <div class="route-footer">
-                        <button class="btn book-btn">Book Ticket</button>
-                        <button class="btn track-btn">Track Bus</button>
+                        <button class="btn book-btn" onclick="showTicketingOptions('${routeId}', '${from}', '${to}', '${departureTime}')">Book Ticket</button>
+                        <button class="btn track-btn" onclick="trackBus('${routeId}')">Track Bus</button>
                     </div>
                 </div>
                 <button class="btn btn-outline" onclick="resetDemoPlanner()">Plan Another Journey</button>
@@ -1178,7 +1158,6 @@ function showGoodsTransportInfo() {
     }
 }
 
-/// Add function to process goods booking
 function processGoodsBooking() {
     const modalContent = getElement('#modal-content-container');
     if (!modalContent) return;
@@ -1186,36 +1165,28 @@ function processGoodsBooking() {
     // Get form values
     const pickupLocation = document.getElementById('pickup-location').value;
     const deliveryLocation = document.getElementById('delivery-location').value;
-    const packageType = document.getElementById('package-type').value;
-    const deliveryTime = document.getElementById('delivery-time').value;
+    const weight = parseFloat(document.getElementById('package-weight').value);
     
     // Validate form
-    if (!pickupLocation || !deliveryLocation) {
-        alert('Please enter both pickup and delivery locations');
+    if (!pickupLocation || !deliveryLocation || !weight) {
+        alert('Please fill in all required fields');
         return;
     }
     
     // Generate booking ID
     const bookingId = 'KMT-G-' + Math.random().toString(36).substr(2, 8).toUpperCase();
     
-    // Calculate price based on package type
-    let price = 0;
-    switch (packageType) {
-        case 'small':
-            price = Math.floor(Math.random() * 51) + 50; // 50-100
-            break;
-        case 'medium':
-            price = Math.floor(Math.random() * 101) + 100; // 100-200
-            break;
-        case 'large':
-            price = Math.floor(Math.random() * 151) + 200; // 200-350
-            break;
-    }
+    // Fixed rates
+    const distanceRate = 10; // ₹10 per km
+    const weightRate = 20;   // ₹20 per kg
     
-    // Add express fee for same-day delivery
-    if (deliveryTime === 'same-day') {
-        price += 50;
-    }
+    // Simulate distance calculation (in real app, use maps API)
+    const estimatedDistance = Math.floor(Math.random() * 20) + 5; // 5-25 km
+    
+    // Calculate total price
+    const distanceCharge = estimatedDistance * distanceRate;
+    const weightCharge = weight * weightRate;
+    const totalPrice = distanceCharge + weightCharge;
     
     // Show loading state
     modalContent.innerHTML = `
@@ -1228,107 +1199,24 @@ function processGoodsBooking() {
     
     // Simulate processing with delay
     setTimeout(() => {
-        // Show confirmation
         modalContent.innerHTML = `
             <div style="text-align: center; padding: 20px;">
                 <i class="fas fa-check-circle" style="font-size: 48px; color: #4a6cf7; margin-bottom: 20px;"></i>
                 <h2>Booking Confirmed!</h2>
-                <p>Your goods transportation request has been confirmed.</p>
-                
                 <div style="margin: 20px 0; background: #f5f5f5; padding: 15px; border-radius: 5px; text-align: left;">
                     <p><strong>Booking ID:</strong> ${bookingId}</p>
                     <p><strong>Pickup:</strong> ${pickupLocation}</p>
                     <p><strong>Delivery:</strong> ${deliveryLocation}</p>
-                    <p><strong>Package Type:</strong> ${packageType.charAt(0).toUpperCase() + packageType.slice(1)}</p>
-                    <p><strong>Delivery Type:</strong> ${deliveryTime.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}</p>
-                    <p><strong>Amount:</strong> ₹${price.toFixed(2)}</p>
+                    <p><strong>Package Weight:</strong> ${weight} kg</p>
+                    <p><strong>Estimated Distance:</strong> ${estimatedDistance} km</p>
+                    <p><strong>Distance Charge:</strong> ₹${distanceCharge.toFixed(2)} (₹${distanceRate}/km)</p>
+                    <p><strong>Weight Charge:</strong> ₹${weightCharge.toFixed(2)} (₹${weightRate}/kg)</p>
+                    <p><strong>Total Amount:</strong> ₹${totalPrice.toFixed(2)}</p>
                 </div>
-                
-                <p>A confirmation has been sent to your phone number. Our team will contact you shortly for pickup arrangements.</p>
-                
                 <div class="qr-scanner">
                     <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${bookingId}" alt="QR Code">
-                    <p style="margin-top: 10px;">Your booking QR code for reference</p>
+                    <p style="margin-top: 10px;">Your booking QR code</p>
                 </div>
-                
-                <button onclick="closeModal()" class="btn btn-primary" style="margin-top: 20px;">Close</button>
-            </div>
-        `;
-    }, 2000);
-}
-// Add function to process goods booking
-function processGoodsBooking() {
-    const modalContent = getElement('#modal-content-container');
-    if (!modalContent) return;
-    
-    // Get form values
-    const pickupLocation = document.getElementById('pickup-location').value;
-    const deliveryLocation = document.getElementById('delivery-location').value;
-    const packageType = document.getElementById('package-type').value;
-    const deliveryTime = document.getElementById('delivery-time').value;
-    
-    // Validate form
-    if (!pickupLocation || !deliveryLocation) {
-        alert('Please enter both pickup and delivery locations');
-        return;
-    }
-    
-    // Generate booking ID
-    const bookingId = 'KMT-G-' + Math.random().toString(36).substr(2, 8).toUpperCase();
-    
-    // Calculate price based on package type
-    let price = 0;
-    switch (packageType) {
-        case 'small':
-            price = Math.floor(Math.random() * 51) + 50; // 50-100
-            break;
-        case 'medium':
-            price = Math.floor(Math.random() * 101) + 100; // 100-200
-            break;
-        case 'large':
-            price = Math.floor(Math.random() * 151) + 200; // 200-350
-            break;
-    }
-    
-    // Add express fee for same-day delivery
-    if (deliveryTime === 'same-day') {
-        price += 50;
-    }
-    
-    // Show loading state
-    modalContent.innerHTML = `
-        <div style="text-align: center; padding: 20px;">
-            <i class="fas fa-spinner fa-spin" style="font-size: 48px; color: #4a6cf7; margin-bottom: 20px;"></i>
-            <h2>Processing Your Booking</h2>
-            <p>Please wait while we process your goods transportation request...</p>
-        </div>
-    `;
-    
-    // Simulate processing with delay
-    setTimeout(() => {
-        // Show confirmation
-        modalContent.innerHTML = `
-            <div style="text-align: center; padding: 20px;">
-                <i class="fas fa-check-circle" style="font-size: 48px; color: #4a6cf7; margin-bottom: 20px;"></i>
-                <h2>Booking Confirmed!</h2>
-                <p>Your goods transportation request has been confirmed.</p>
-                
-                <div style="margin: 20px 0; background: #f5f5f5; padding: 15px; border-radius: 5px; text-align: left;">
-                    <p><strong>Booking ID:</strong> ${bookingId}</p>
-                    <p><strong>Pickup:</strong> ${pickupLocation}</p>
-                    <p><strong>Delivery:</strong> ${deliveryLocation}</p>
-                    <p><strong>Package Type:</strong> ${packageType.charAt(0).toUpperCase() + packageType.slice(1)}</p>
-                    <p><strong>Delivery Type:</strong> ${deliveryTime.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}</p>
-                    <p><strong>Amount:</strong> ₹${price.toFixed(2)}</p>
-                </div>
-                
-                <p>A confirmation has been sent to your phone number. Our team will contact you shortly for pickup arrangements.</p>
-                
-                <div class="qr-scanner">
-                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${bookingId}" alt="QR Code">
-                    <p style="margin-top: 10px;">Your booking QR code for reference</p>
-                </div>
-                
                 <button onclick="closeModal()" class="btn btn-primary" style="margin-top: 20px;">Close</button>
             </div>
         `;

@@ -33,6 +33,7 @@ const goodsTypeCharges = {
 };
 
 // Update pricing constants
+// Remove goods type charges
 const PRICING = {
     PER_KM_RATE: 5,
     PER_KG_RATE: 3,
@@ -60,27 +61,24 @@ function calculatePrice() {
     const weight = parseFloat(document.getElementById('weight').value) || 0;
     const pickup = document.getElementById('pickupLocation').value;
     const delivery = document.getElementById('deliveryLocation').value;
-    const goodsType = document.getElementById('goodsType').value;
 
     const distance = calculateDistance(pickup, delivery);
     const distanceCharge = distance * PRICING.PER_KM_RATE;
     const weightCharge = weight * PRICING.PER_KG_RATE;
-    const typeCharge = goodsTypeCharges[goodsType].charge;
     
-    const totalCost = distanceCharge + weightCharge + typeCharge;
+    const totalCost = distanceCharge + weightCharge;
 
-    updatePriceDisplay(distance, weight, goodsType, distanceCharge, weightCharge, typeCharge, totalCost);
+    updatePriceDisplay(distance, weight, distanceCharge, weightCharge, totalCost);
     return totalCost;
 }
 
-function updatePriceDisplay(distance, weight, goodsType, distanceCharge, weightCharge, typeCharge, totalCost) {
+function updatePriceDisplay(distance, weight, distanceCharge, weightCharge, totalCost) {
     const priceDisplay = document.getElementById('price-display');
     if (!priceDisplay) return;
 
     const priceBreakdown = [
         { label: `Distance Charge (${distance}km × ${formatCurrency(PRICING.PER_KM_RATE)}/km)`, value: distanceCharge },
         { label: `Weight Charge (${weight}kg × ${formatCurrency(PRICING.PER_KG_RATE)}/kg)`, value: weightCharge },
-        { label: `Additional ${goodsTypeCharges[goodsType].description}`, value: typeCharge },
         { label: 'Total Cost', value: totalCost, isTotal: true }
     ];
 
@@ -108,16 +106,14 @@ function createServiceHighlights() {
             <div class="highlight-item">
                 <i class="fas fa-box"></i>
                 <h4>Package Types</h4>
-                <p>Handle various goods: ${Object.values(goodsTypeCharges)
-                    .map(type => type.description.split(' (')[0]).join(', ')}</p>
+                <p>We handle all types of packages within weight limits</p>
             </div>
             <div class="highlight-item">
                 <i class="fas fa-rupee-sign"></i>
-                <h4>Pricing Structure</h4>
+                <h4>Simple Pricing Structure</h4>
                 <ul class="pricing-list">
                     <li>Distance Rate: ${formatCurrency(PRICING.PER_KM_RATE)}/km</li>
                     <li>Weight Rate: ${formatCurrency(PRICING.PER_KG_RATE)}/kg</li>
-                    <li>Additional charges vary by goods type</li>
                 </ul>
             </div>
         </div>
@@ -141,22 +137,17 @@ function createBookingForm() {
                 </select>
             </div>
             
-            <div class="form-group">
-                <label for="goodsType">Type of Goods</label>
-                <select id="goodsType" required>
-                    ${Object.entries(goodsTypeCharges).map(([value, { description }]) => 
-                        `<option value="${value}">${description}</option>`).join('')}
-                </select>
-            </div>
-
             <div id="price-display" class="price-display"></div>
             
             <div class="form-group">
                 <label for="weight">Approximate Weight (kg)</label>
                 <input type="number" id="weight" 
-                    min="${PRICING.MIN_WEIGHT}" 
-                    max="${PRICING.MAX_WEIGHT}" 
-                    step="0.1" required>
+                    min="0.1" 
+                    max="50" 
+                    step="0.1"
+                    oninput="this.value = Math.min(Math.max(this.value, 0.1), 50)"
+                    required>
+                <small class="weight-hint">Maximum weight allowed: 50 kg</small>
             </div>
             
             <div class="form-group">
@@ -230,10 +221,19 @@ function closeGoodsModal() {
 function submitGoodsBooking(event) {
     event.preventDefault();
     
-    const formElements = ['pickupLocation', 'deliveryLocation', 'goodsType', 'weight', 'pickupDate', 'pickupTime'];
-    const formData = Object.fromEntries(
-        formElements.map(id => [id, document.getElementById(id).value])
-    );
+    // Get only the form elements that exist
+    const formElements = ['pickupLocation', 'deliveryLocation', 'weight', 'pickupDate', 'pickupTime'];
+    const formData = {};
+    
+    // Validate and collect form data
+    for (const id of formElements) {
+        const element = document.getElementById(id);
+        if (!element || !element.value) {
+            alert('Please fill in all required fields');
+            return;
+        }
+        formData[id] = element.value;
+    }
 
     const totalCost = calculatePrice();
 
@@ -246,9 +246,11 @@ function submitGoodsBooking(event) {
                 </button>
             </div>
             <div class="confirmation-details">
-                ${Object.entries(formData).map(([key, value]) => 
-                    `<p><strong>${key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}:</strong> ${value}</p>`
-                ).join('')}
+                <p><strong>Pickup Location:</strong> ${formData.pickupLocation}</p>
+                <p><strong>Delivery Location:</strong> ${formData.deliveryLocation}</p>
+                <p><strong>Package Weight:</strong> ${formData.weight} kg</p>
+                <p><strong>Pickup Date:</strong> ${formData.pickupDate}</p>
+                <p><strong>Pickup Time:</strong> ${formData.pickupTime}</p>
                 <p><strong>Total Cost:</strong> ${formatCurrency(totalCost)}</p>
             </div>
             <p class="success-message">Your booking has been confirmed!</p>
