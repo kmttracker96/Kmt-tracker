@@ -433,6 +433,7 @@ function getSupportedLanguages() {
     return LANGUAGES;
 }
 
+
 window.translate = translate;
 window.setLanguage = setLanguage;
 window.getCurrentLanguage = getCurrentLanguage;
